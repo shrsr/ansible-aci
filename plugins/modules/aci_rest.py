@@ -434,7 +434,6 @@ def main():
         try:
             # APIC error
             aci.response_type(info.get('body'), rest_type)
-            aci.stdout = str(info)
             aci.fail_json(msg='APIC Error %(code)s: %(text)s' % aci.error)
         except KeyError:
             # Connection error
