@@ -278,6 +278,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.cisco.aci.plugins.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_text
+from ansible.module_utils.connection import Connection
 
 
 def update_qsl(url, params):
@@ -389,11 +390,11 @@ def main():
     elif rest_type == 'xml' and HAS_LXML_ETREE:
         if content and isinstance(content, dict) and HAS_XMLJSON_COBRA:
             # Validate inline YAML/JSON
-            payload = etree.tostring(cobra.etree(payload)[0])
+            payload = etree.tostring(cobra.etree(payload)[0], encoding='unicode')
         elif payload and isinstance(payload, str):
             try:
                 # Validate XML string
-                payload = etree.tostring(etree.fromstring(payload))
+                payload = etree.tostring(etree.fromstring(payload), encoding='unicode')
             except Exception as e:
                 module.fail_json(msg='Failed to parse provided XML payload: %s' % to_text(e), payload=payload)
 
@@ -413,12 +414,17 @@ def main():
     aci.method = aci.params.get('method').upper()
 
     # Perform request
-    resp, info = fetch_url(module, aci.url,
-                           data=payload,
-                           headers=aci.headers,
-                           method=aci.method,
-                           timeout=aci.params.get('timeout'),
-                           use_proxy=aci.params.get('use_proxy'))
+    resp = None
+    if module._socket_path:
+        conn = Connection(aci.module._socket_path)
+        info = conn.send_request(aci.method, '/' + path, payload)
+    else:
+        resp, info = fetch_url(module, aci.url,
+                              data=payload,
+                              headers=aci.headers,
+                              method=aci.method,
+                              timeout=aci.params.get('timeout'),
+                              use_proxy=aci.params.get('use_proxy'))
 
     aci.response = info.get('msg')
     aci.status = info.get('status')
@@ -428,12 +434,16 @@ def main():
         try:
             # APIC error
             aci.response_type(info.get('body'), rest_type)
+            aci.stdout = str(info)
             aci.fail_json(msg='APIC Error %(code)s: %(text)s' % aci.error)
         except KeyError:
             # Connection error
             aci.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
 
-    aci.response_type(resp.read(), rest_type)
+    try:
+        aci.response_type(resp.read(), rest_type)
+    except AttributeError:
+        aci.response_type(info.get('body'), rest_type)
 
     aci.result['imdata'] = aci.imdata
     aci.result['totalCount'] = aci.totalCount

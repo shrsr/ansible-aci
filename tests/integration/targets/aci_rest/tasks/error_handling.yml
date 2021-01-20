@@ -21,6 +21,7 @@
         attributes:
           name: ansible_test
   ignore_errors: yes
+  delegate_to: localhost
   register: error_on_name_resolution
 
 - name: Verify error_on_name_resolution
