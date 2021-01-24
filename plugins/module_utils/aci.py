@@ -41,7 +41,6 @@ __metaclass__ = type
 import base64
 import json
 import os
-import inspect
 from copy import deepcopy
 
 from ansible.module_utils.urls import fetch_url
