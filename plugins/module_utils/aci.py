@@ -13,6 +13,7 @@
 # Copyright: (c) 2019, Rob Huelga (@RobW3LGA)
 # Copyright: (c) 2020, Lionel Hercot (@lhercot) <lhercot@cisco.com>
 # Copyright: (c) 2020, Anvitha Jain (@anvitha-jain) <anvjain@cisco.com>
+# Copyright: (c) 2020, Shreyas Srish (@shrsr) <ssrish@cisco.com>
 # All rights reserved.
 
 # Redistribution and use in source and binary forms, with or without modification,
@@ -81,7 +82,7 @@ except ImportError:
 
 def aci_argument_spec():
     return dict(
-        host=dict(type='str', required=False, aliases=['hostname'], fallback=(env_fallback, ['ACI_HOST'])),
+        host=dict(type='str', required=True, aliases=['hostname'], fallback=(env_fallback, ['ACI_HOST'])),
         port=dict(type='int', required=False, fallback=(env_fallback, ['ACI_PORT'])),
         username=dict(type='str', default='admin', aliases=['user'], fallback=(env_fallback, ['ACI_USERNAME', 'ANSIBLE_NET_USERNAME'])),
         password=dict(type='str', no_log=True, fallback=(env_fallback, ['ACI_PASSWORD', 'ANSIBLE_NET_PASSWORD'])),
@@ -283,10 +284,10 @@ class ACIModule(object):
     def response_json(self, rawoutput):
         ''' Handle APIC JSON response output '''
         try:
-             if isinstance(rawoutput, dict):
-                 jsondata = rawoutput
-             else:
-                 jsondata = json.loads(rawoutput)
+            if isinstance(rawoutput, dict):
+                jsondata = rawoutput
+            else:
+                jsondata = json.loads(rawoutput)
         except Exception as e:
             # Expose RAW output for troubleshooting
             self.error = dict(code=-1, text="Unable to parse output as JSON, see 'raw' output. %s" % e)
@@ -1260,7 +1261,7 @@ class ACIModule(object):
                 self.result['status'] = self.status
                 self.result['url'] = self.url
         if self.stdout:
-                self.result['stdout'] = self.stdout
+            self.result['stdout'] = self.stdout
 
         if 'state' in self.params:
             if self.params.get('output_level') in ('debug', 'info'):
@@ -1309,7 +1310,7 @@ class ACIModule(object):
             data = None
         resp = None
         if self.params.get('private_key'):
-                self.cert_auth(method=method, path=call_path, payload=data)
+            self.cert_auth(method=method, path=call_path, payload=data)
 
         if self.module._socket_path:
             conn = Connection(self.module._socket_path)
@@ -1348,4 +1349,3 @@ class ACIModule(object):
             except KeyError:
                 # Connection error
                 self.fail_json(msg='Connection failed for %(url)s. %(msg)s' % info)
-
