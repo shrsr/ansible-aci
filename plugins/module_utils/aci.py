@@ -121,7 +121,6 @@ class ACIModule(object):
         self.original = None
         self.proposed = dict()
         self.stdout = None
-        self.get_auth = None
 
         # debug output
         self.filter_string = ''
@@ -278,7 +277,6 @@ class ACIModule(object):
                                  'APIC-Certificate-DN=%s; ' % sig_dn +\
                                  'APIC-Certificate-Fingerprint=fingerprint; ' +\
                                  'APIC-Request-Signature=%s' % to_native(base64.b64encode(sig_signature))
-        self.get_auth = self.headers['Cookie']
 
     def response_json(self, rawoutput):
         ''' Handle APIC JSON response output '''
@@ -1313,7 +1311,8 @@ class ACIModule(object):
 
         if self.module._socket_path:
             conn = Connection(self.module._socket_path)
-            conn.get_auth(self.get_auth, self.params.get('host'), self.params.get('username'), self.params.get('password'))
+            conn.set_auth(self.headers.get('Cookie'), self.params.get('host'), self.params.get('username'), self.params.get('password'),
+                          self.params.get('port'), self.params.get('use_ssl'), self.params.get('use_proxy'), self.params.get('validate_certs'))
             info = conn.send_request(method, '/{0}'.format(call_path), data)
         else:
             resp, info = fetch_url(self.module, call_url,
