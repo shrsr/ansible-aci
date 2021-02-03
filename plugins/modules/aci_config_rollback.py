@@ -299,6 +299,11 @@ def get_preview(aci):
         conn = Connection(aci.module._socket_path)
         conn.set_params(aci.headers.get('Cookie'), aci.params)
         info = conn.send_request('GET', '/{0}'.format(path), None)
+        try:
+            aci.url = info.get('url')
+        except Exception:
+            info = conn.send_request('GET', '/{0}'.format(path), None)
+            aci.url = info.get('url')
     else:
         resp, info = fetch_url(aci.module, uri, headers=aci.headers, method='GET', timeout=aci.module.params.get('timeout'),
                                use_proxy=aci.module.params.get('use_proxy'))
